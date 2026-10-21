@@ -1,3 +1,12 @@
+import streamlit as st
+
+# ဖန်တီးသူ အမှတ်အသား စာသားထည့်ရန်
+st.markdown(
+    "###  ဆရာထွန်း၏ဖန်တီးမှု "
+)  # အရွယ်အစား လိုသလို ကြီးငယ်ညှိနိုင်ပါတယ်
+
+st.title(" Myanmar 2D Live Tracker")
+
 from datetime import datetime
 import sqlite3
 import urllib.request
