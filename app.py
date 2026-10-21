@@ -1,20 +1,15 @@
 from datetime import datetime
 import sqlite3
-import time
 import urllib.request
+import pandas as pd
+import streamlit as st
 
-# ၁။ ဒေတာသိမ်းထားသော Database နှင့် ချိတ်ဆက်ခြင်း
-conn = sqlite3.connect("my_2d_log.db")
-from datetime import datetime
-import sqlite3
-import time
-import urllib.request
+st.title(" Myanmar 2D Live Tracker")
 
-# ၁။ ဒေတာသိမ်းထားသော Database နှင့် ချိတ်ဆက်ခြင်း
+# ၁။ Database ချိတ်ဆက်ခြင်းနှင့် Table ဆောက်ခြင်း
 conn = sqlite3.connect("my_2d_log.db", check_same_thread=False)
 cursor = conn.cursor()
 
-# [အရေးကြီး] ဇယား (Table) မရှိသေးပါက အသစ်ဖန်တီးရန် ဤနေရာကို ထည့်ပါ
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS number_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,96 +20,51 @@ cursor.execute("""
 conn.commit()
 
 
-# ၂. ဝဘ်ဆိုဒ်ဆီကနေ ဒေတာသွားယူမယ့် ဖန်ရှင်
-def fetch_website_data():
+# ၂။ ဒေတာဆွဲယူမည့် ဖန်ရှင်
+def fetch_and_log_data():
+  url = "https://myanmar-2d.vercel.app/"
   try:
-    url = "https://myanmar-2d.vercel.app/"
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req) as response:
-      html_content = response.read().decode("utf-8")
-
-      # လောလောဆယ် စမ်းသပ်ရန် ကျပန်းဂဏန်းများ (ပြဿနာမရှိပါ)
+      # လောလောဆယ် စမ်းသပ်ရန် ကျပန်းဂဏန်းများ
       import random
 
-      sample_numbers = ["12", "45", "12", "78", "45", "12"]
-      return random.choice(sample_numbers)
+      sample_numbers = ["12", "45", "78", "33", "90", "12"]
+      live_number = random.choice(sample_numbers)
 
-  except Exception as e:
-    return None
-
-cursor = conn.cursor()
-
-
-# ၂. ဝဘ်ဆိုဒ်ဆီကနေ ဒေတာသွားယူမယ့် ဖန်ရှင်
-def fetch_website_data():
-  try:
-    url = "https://myanmar-2d.vercel.app/"
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req) as response:
-      html_content = response.read().decode("utf-8")
-
-      #  မှတ်ချက်။ ။ အကယ်၍ တကယ့်ဝဘ်ဆိုဒ်ထဲက ကိန်းဂဏန်းအစစ် (ဥပမာ '54' သို့မဟုတ် '83') ကို
-      # တိတိကျကျ ဖြတ်ထုတ်ယူနိုင်ပြီဆိုပါက ဤနေရာတွင် ထိုဂဏန်းအစစ်ကို ထည့်ရပါမည်။
-      # လောလောဆယ် စမ်းသပ်ရန် ကျပန်းဂဏန်းအချို့ကို ထည့်ပေးထားပါသည်။
-      import random
-
-      sample_numbers = ["12", "45", "12", "78", "45", "12"]
-      return random.choice(sample_numbers)
-
-  except Exception as e:
-    return None
-
-
-print("--- ဒေတာမှတ်သားခြင်းနှင့် ရာခိုင်နှုန်းတွက်ချက်ခြင်း စတင်ပါပြီ ---")
-
-try:
-  # လိုအပ်သလို အချိန်အကြာကြီး မှတ်သားစေရန် while True သုံးထားသည်
-  while True:
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    live_number = fetch_website_data()
-
-    if live_number:
-      # Database ထဲသို့ သိမ်းမည်
+      current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
       cursor.execute(
           "INSERT INTO number_logs (timestamp, live_data) VALUES (?, ?)",
           (current_time, live_number),
       )
       conn.commit()
-      print(f"[{current_time}] မှတ်တမ်းတင်ပြီး - ဂဏန်း: {live_number}")
+  except Exception as e:
+    st.error(f"Error occurred: {e}")
 
-    # --- ၃။ အများဆုံးကျခဲ့သည့် နံပါတ်များနှင့် ရာခိုင်နှုန်းများကို တွက်ချက်ပြခြင်း ---
-    print("\n---  ဂဏန်းကျရောက်မှု ရာခိုင်နှုန်းစာရင်း ---")
 
-    # စုစုပေါင်း ဘယ်နှစ်ကြိမ် မှတ်မိလဲရေတွက်ခြင်း
-    cursor.execute("SELECT COUNT(*) FROM number_logs")
-    total_count = cursor.fetchone()[0]
+# ခလုတ်နှိပ်ပြီး ဒေတာအသစ် ရယူရန်
+if st.button(" ဒေတာအသစ် ရယူရန် (Refresh / Fetch)"):
+  fetch_and_log_data()
+  st.rerun()
 
-    if total_count > 0:
-      # ဂဏန်းတစ်ခုချင်းစီ ဘယ်နှစ်ခါကျလဲ စုစည်းပြီး အများဆုံးကနေ အနည်းကို စီခြင်း
-      cursor.execute("""
-                SELECT live_data, COUNT(*) as frequency 
-                FROM number_logs 
-                GROUP BY live_data 
-                ORDER BY frequency DESC
-            """)
-      results = cursor.fetchall()
+# ၃။ ဒေတာများကို ဝဘ်ဆိုဒ်ပေါ်တွင် ပြသခြင်း
+st.subheader(" ဂဏန်းကျရောက်မှု စာရင်းဇယား")
 
-      for row in results:
-        number = row[0]
-        count = row[1]
-        # ရာခိုင်နှုန်း တွက်ချက်ခြင်း (ကျတဲ့ကြိမ်ရေ / စုစုပေါင်းကြိမ်ရေ * 100)
-        percentage = (count / total_count) * 100
-        print(
-            f"ဂဏန်း {number}: {count} ကြိမ် ကျ (ရာခိုင်နှုန်း: {percentage:.2f}%)"
-        )
-    else:
-      print("ဒေတာ မရှိသေးပါ။")
+df = pd.read_sql("SELECT * FROM number_logs ORDER BY id DESC", conn)
 
-    print("-" * 40)
+if not df.empty:
+  st.dataframe(df, use_container_width=True)
 
-    # ၁၀ စက္ကန့် တစ်ကြိမ် ထပ်လုပ်မည် (လိုသလို အချိန်ပြောင်းနိုင်ပါသည်)
-    time.sleep(10)
+  st.subheader(" ရာခိုင်နှုန်း တွက်ချက်မှုများ")
+  total_count = len(df)
+  counts = df["live_data"].value_counts()
 
-except KeyboardInterrupt:
-  conn.close()
-  print("\n--- ပရိုဂရမ်ကို ရပ်တန့်လိုက်ပါပြီ ---")
+  for num, count in counts.items():
+    percentage = (count / total_count) * 100
+    st.write(
+        f"- ဂဏန်း **{num}**: {count} ကြိမ် ကျ (ရာခိုင်နှုန်း: **{percentage:.2f}%**)"
+    )
+else:
+  st.info(
+      "လောလောဆယ် ဒေတာ မရှိသေးပါ။ အပေါ်က 'ဒေတာအသစ် ရယူရန်' ခလုတ်ကို နှိပ်ပါ။"
+  )
