@@ -1,18 +1,3 @@
-import sqlite3
-
-# Database ချိတ်ဆက်ခြင်းနှင့် Table အလိုအလျောက်ဆောက်ခြင်း
-conn = sqlite3.connect("my_2d_log.db", check_same_thread=False)
-cursor = conn.cursor()
-
-# number_logs ဆိုတဲ့ ဇယားမရှိသေးရင် အသစ်ဆောက်မည်
-cursor.execute("""
-    CREATE TABLE IF NOT EXISTS number_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp TEXT,
-        live_number TEXT
-    )
-""")
-conn.commit()
 from datetime import datetime
 import sqlite3
 import time
@@ -20,7 +5,46 @@ import urllib.request
 
 # ၁။ ဒေတာသိမ်းထားသော Database နှင့် ချိတ်ဆက်ခြင်း
 conn = sqlite3.connect("my_2d_log.db")
+from datetime import datetime
+import sqlite3
+import time
+import urllib.request
+
+# ၁။ ဒေတာသိမ်းထားသော Database နှင့် ချိတ်ဆက်ခြင်း
+conn = sqlite3.connect("my_2d_log.db", check_same_thread=False)
 cursor = conn.cursor()
+
+# [အရေးကြီး] ဇယား (Table) မရှိသေးပါက အသစ်ဖန်တီးရန် ဤနေရာကို ထည့်ပါ
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS number_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT,
+        live_data TEXT
+    )
+""")
+conn.commit()
+
+
+# ၂. ဝဘ်ဆိုဒ်ဆီကနေ ဒေတာသွားယူမယ့် ဖန်ရှင်
+def fetch_website_data():
+  try:
+    url = "https://myanmar-2d.vercel.app/"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req) as response:
+      html_content = response.read().decode("utf-8")
+
+      # လောလောဆယ် စမ်းသပ်ရန် ကျပန်းဂဏန်းများ (ပြဿနာမရှိပါ)
+      import random
+
+      sample_numbers = ["12", "45", "12", "78", "45", "12"]
+      return random.choice(sample_numbers)
+
+  except Exception as e:
+    return None
+
+cursor = conn.cursor()
+
+
 # ၂. ဝဘ်ဆိုဒ်ဆီကနေ ဒေတာသွားယူမယ့် ဖန်ရှင်
 def fetch_website_data():
   try:
