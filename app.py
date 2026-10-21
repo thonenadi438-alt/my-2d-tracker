@@ -1,3 +1,18 @@
+import sqlite3
+
+# Database ချိတ်ဆက်ခြင်းနှင့် Table အလိုအလျောက်ဆောက်ခြင်း
+conn = sqlite3.connect("my_2d_log.db", check_same_thread=False)
+cursor = conn.cursor()
+
+# number_logs ဆိုတဲ့ ဇယားမရှိသေးရင် အသစ်ဆောက်မည်
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS number_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT,
+        live_number TEXT
+    )
+""")
+conn.commit()
 from datetime import datetime
 import sqlite3
 import time
