@@ -21,8 +21,6 @@ import urllib.request
 # ၁။ ဒေတာသိမ်းထားသော Database နှင့် ချိတ်ဆက်ခြင်း
 conn = sqlite3.connect("my_2d_log.db")
 cursor = conn.cursor()
-
-
 # ၂. ဝဘ်ဆိုဒ်ဆီကနေ ဒေတာသွားယူမယ့် ဖန်ရှင်
 def fetch_website_data():
   try:
