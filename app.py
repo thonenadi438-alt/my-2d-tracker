@@ -13,7 +13,6 @@ import urllib.request
 import pandas as pd
 import streamlit as st
 
-st.title(" Myanmar 2D Live Tracker")
 
 # ၁။ Database ချိတ်ဆက်ခြင်းနှင့် Table ဆောက်ခြင်း
 conn = sqlite3.connect("my_2d_log.db", check_same_thread=False)
