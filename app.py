@@ -29,47 +29,54 @@ conn.commit()
 # ၂။ ဒေတာဆွဲယူမည့် ဖန်ရှင်
 
 from datetime import datetime, timedelta, timezone
-import re
+
 
 def fetch_and_log_data():
-    url = "https://myanmar-2d.vercel.app/"
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req) as response:
-            html_content = response.read().decode("utf-8")
-            soup = BeautifulSoup(html_content, 'html.parser')
-            
-            live_number = None
-            
-            # မူရင်းဝဘ်ဆိုဒ်၏ ပင်မစာမျက်နှာပေါ်ရှိ ဂဏန်း ၂ လုံးပါသော ပင်မတန်ဖိုးကို ရှာဖွေခြင်း
-            # (ဝဘ်ဆိုဒ်ပေါ်ရှိ ကြီးမားသော ခေါင်းစဉ် သို့မဟုတ် ကတ်ပြားအတွင်းမှ ဂဏန်းကို ရှာသည်။)
-            for tag in soup.find_all(['div', 'h1', 'h2', 'span', 'b']):
-                text = tag.text.strip()
-                # 2D ဂဏန်းများသည် များသောအားဖြင့် 00 မှ 99 ကြားရှိ ဂဏန်း ၂ လုံး ဖြစ်သည်
-                if text.isdigit() and len(text) == 2:
-                    live_number = text
-                    break
-            
-            # အကယ်၍ တိုက်ရိုက်မတွေ့ပါက ပုံမှန်တွေ့နေရသည့် တန်ဖိုးကို ယူရန်
-            if not live_number:
-                live_number = "76" # ယာယီအခြေအနေအတွက် 
+  url = "https://myanmar-2d.vercel.app/"
+  try:
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req) as response:
+      html_content = response.read().decode("utf-8")
+      soup = BeautifulSoup(html_content, "html.parser")
 
-            if live_number:
-                # မြန်မာစံတော်ချိန် (UTC +6:30) ဖြင့် အချိန်ယူခြင်း
-                myanmar_tz = timezone(timedelta(hours=6, minutes=30))
-                current_time = datetime.now(myanmar_tz).strftime("%Y-%m-%d %H:%M:%S")
-                
-                cursor.execute(
-                    "INSERT INTO number_logs (timestamp, live_data) VALUES (?, ?)",
-                    (current_time, live_number),
-                )
-                conn.commit()
-                st.success(f"အောင်မြင်စွာ ရယူနိုင်ခဲ့ပါပြီ - ဂဏန်း: {live_number}")
-            else:
-                st.warning("ဝဘ်ဆိုဒ်မှ ဂဏန်းကို ရှာမတွေ့ပါ။")
-                
-    except Exception as e:
-        st.error(f"Error occurred: {e}")
+      live_number = None
+
+      # နည်းလမ်း ၁။ ပထမဦးစွာ ကြီးမားသော live number ပြတတ်သည့် class သို့မဟုတ် h1, h2 များကို ရှာမည်
+      # (ဝဘ်ဆိုက်၏ ပင်မဂဏန်းပြသည့် ပုံစံအပေါ် မူတည်သည်)
+      target_tag = soup.find(
+          ["h1", "h2", "div"],
+          class_=lambda x: x and ("live" in x or "number" in x),
+      )
+      if target_tag:
+        text = target_tag.text.strip()
+        if text.isdigit() and len(text) == 2:
+          live_number = text
+
+      # နည်းလမ်း ၂။ အကယ်၍ အထက်ပါနည်းဖြင့် မတွေ့ပါက စာမျက်နှာပေါ်ရှိ ပထမဆုံးတွေ့ရသော ဂဏန်း ၂ လုံးကို ယူမည်
+      if not live_number:
+        for tag in soup.find_all(["div", "span", "b", "h1", "h2", "p"]):
+          text = tag.text.strip()
+          # 2D ဂဏန်းများ (00 မှ 99 အထိ) ကိုသာ တိကျစွာ ရှာဖွေရန်
+          if text.isdigit() and len(text) == 2:
+            live_number = text
+            break
+
+      if live_number:
+        # မြန်မာစံတော်ချိန် (UTC +6:30) ဖြင့် အချိန်ယူခြင်း
+        myanmar_tz = timezone(timedelta(hours=6, minutes=30))
+        current_time = datetime.now(myanmar_tz).strftime("%Y-%m-%d %H:%M:%S")
+
+        cursor.execute(
+            "INSERT INTO number_logs (timestamp, live_data) VALUES (?, ?)",
+            (current_time, live_number),
+        )
+        conn.commit()
+        st.success(f"အောင်မြင်စွာ ရယူနိုင်ခဲ့ပါပြီ - ဂဏန်း: {live_number}")
+      else:
+        st.warning("ဝဘ်ဆိုဒ်မှ ဂဏန်းကို ရှာမတွေ့ပါ။")
+
+  except Exception as e:
+    st.error(f"Error occurred: {e}")
 
 
 # ခလုတ်နှိပ်ပြီး ဒေတာအသစ် ရယူရန်
