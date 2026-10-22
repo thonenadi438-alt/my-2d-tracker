@@ -1,19 +1,24 @@
 from datetime import datetime, timedelta, timezone
+from bs4 import BeautifulSoup
+import pandas as pd
 import random
 import sqlite3
-import urllib.request
-import pandas as pd
 import streamlit as st
-from bs4 import BeautifulSoup
+from streamlit_autorefresh import st_autorefresh
 
 # ခေါင်းစဉ်နှင့် ဖန်တီးသူအမှတ်အသား
 st.markdown(
     "<h3 style='text-align: center; color: gray;'>ဆရာထွန်း၏ဖန်တီးမှု</h3>",
     unsafe_allow_html=True,
 )
-st.title(" Myanmar 2D Live Tracker")
+st.title(" Myanmar 2D Live Tracker (Auto-Refresh)")
 
-# ၁။ Database ချိတ်ဆက်ခြင်းနှင့် Table ဆောက်ခြင်း
+# ၁။ အလိုအလျောက် Refresh လုပ်မည့် စနစ် (ဥပမာ - ၁၀ စက္ကန့်လျှင် တစ်ကြိမ်၊ 10000 ms)
+# interval ကို မိမိနှစ်သက်ရာ (ဥပမာ - 30 စက္ကန့် = 30000) ပြောင်းလဲနိုင်ပါသည်
+count = st_autorefresh(interval=10000, limit=None, key="auto_fetch_counter")
+
+
+# ၂။ Database ချိတ်ဆက်ခြင်းနှင့် Table ဆောက်ခြင်း
 conn = sqlite3.connect("my_2d_log.db", check_same_thread=False)
 cursor = conn.cursor()
 
@@ -27,7 +32,7 @@ cursor.execute("""
 conn.commit()
 
 
-# ၂။ ဒေတာဆွဲယူမည့် ဖန်ရှင်
+# ၃။ ဒေတာဆွဲယူမည့် ဖန်ရှင်
 def fetch_and_log_data():
   url = "https://myanmar-2d.vercel.app/"
   try:
@@ -60,25 +65,20 @@ def fetch_and_log_data():
         myanmar_tz = timezone(timedelta(hours=6, minutes=30))
         current_time = datetime.now(myanmar_tz).strftime("%Y-%m-%d %H:%M:%S")
 
+        # Database ထဲသို့ အလိုအလျောက် မှတ်တမ်းတင်ခြင်း
         cursor.execute(
             "INSERT INTO number_logs (timestamp, live_data) VALUES (?, ?)",
             (current_time, live_number),
         )
         conn.commit()
-        st.success(f"အောင်မြင်စွာ ရယူနိုင်ခဲ့ပါပြီ - ဂဏန်း: {live_number}")
-      else:
-        st.warning("ဒေတာ ရယူ၍ မရသေးပါ။")
-
   except Exception as e:
-    st.error(f"Error occurred: {e}")
+    pass  # Error တက်ပါကလည်း ဆက်တိုက် အလုပ်လုပ်နေစေရန်
 
 
-# ခလုတ်နှိပ်ပြီး ဒေတာအသစ် ရယူရန်
-if st.button(" ဒေတာအသစ် ရယူရန် (Refresh / Fetch)", key="fetch_btn_1"):
-  fetch_and_log_data()
-  st.rerun()
+# Auto-refresh ဖြစ်တိုင်း ဒေတာအသစ် တစ်ခါတည်း ဆွဲယူမည်
+fetch_and_log_data()
 
-# ၃။ ဒေတာများကို ဝဘ်ဆိုဒ်ပေါ်တွင် ပြသခြင်း
+# ၄။ ဒေတာများကို ဝဘ်ဆိုဒ်ပေါ်တွင် ပြသခြင်း
 st.subheader(" ဂဏန်းကျရောက်မှု စာရင်းဇယား")
 
 df = pd.read_sql("SELECT * FROM number_logs ORDER BY id DESC", conn)
@@ -96,6 +96,4 @@ if not df.empty:
         f"- ဂဏန်း **{num}**: {count} ကြိမ် ကျ (ရာခိုင်နှုန်း: **{percentage:.2f}%**)"
     )
 else:
-  st.info(
-      "လောလောဆယ် ဒေတာ မရှိသေးပါ။ အပေါ်က 'ဒေတာအသစ် ရယူရန်' ခလုတ်ကို နှိပ်ပါ။"
-  )
+  st.info("လောလောဆယ် ဒေတာ မရှိသေးပါ။")
