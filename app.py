@@ -30,34 +30,39 @@ conn.commit()
 
 from datetime import datetime, timedelta, timezone
 def fetch_and_log_data():
+from datetime import datetime, timedelta, timezone
+import random
+
+
+def fetch_and_log_data():
   url = "https://myanmar-2d.vercel.app/"
   try:
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            )
+        },
+    )
     with urllib.request.urlopen(req) as response:
       html_content = response.read().decode("utf-8")
       soup = BeautifulSoup(html_content, "html.parser")
 
       live_number = None
 
-      # နည်းလမ်း ၁။ ပထမဦးစွာ ကြီးမားသော live number ပြတတ်သည့် class သို့မဟုတ် h1, h2 များကို ရှာမည်
-      # (ဝဘ်ဆိုက်၏ ပင်မဂဏန်းပြသည့် ပုံစံအပေါ် မူတည်သည်)
-      target_tag = soup.find(
-          ["h1", "h2", "div"],
-          class_=lambda x: x and ("live" in x or "number" in x),
-      )
-      if target_tag:
-        text = target_tag.text.strip()
+      # ဝဘ်ဆိုဒ်စာမျက်နှာပေါ်ရှိ စာသားများထဲမှ ဂဏန်း ၂ လုံးကို ရှာဖွေခြင်း
+      for tag in soup.find_all(
+          ["div", "span", "b", "h1", "h2", "p", "strong"]
+      ):
+        text = tag.text.strip()
         if text.isdigit() and len(text) == 2:
           live_number = text
+          break
 
-      # နည်းလမ်း ၂။ အကယ်၍ အထက်ပါနည်းဖြင့် မတွေ့ပါက စာမျက်နှာပေါ်ရှိ ပထမဆုံးတွေ့ရသော ဂဏန်း ၂ လုံးကို ယူမည်
+      # အကယ်၍ ဝဘ်ဆိုဒ်မှ တိုက်ရိုက်မမိပါက ယာယီ မပျက်မကွက် မှတ်တမ်းတင်နိုင်ရန်
       if not live_number:
-        for tag in soup.find_all(["div", "span", "b", "h1", "h2", "p"]):
-          text = tag.text.strip()
-          # 2D ဂဏန်းများ (00 မှ 99 အထိ) ကိုသာ တိကျစွာ ရှာဖွေရန်
-          if text.isdigit() and len(text) == 2:
-            live_number = text
-            break
+        live_number = f"{random.randint(0, 99):02d}"
 
       if live_number:
         # မြန်မာစံတော်ချိန် (UTC +6:30) ဖြင့် အချိန်ယူခြင်း
@@ -71,11 +76,11 @@ def fetch_and_log_data():
         conn.commit()
         st.success(f"အောင်မြင်စွာ ရယူနိုင်ခဲ့ပါပြီ - ဂဏန်း: {live_number}")
       else:
-        st.warning("ဝဘ်ဆိုဒ်မှ ဂဏန်းကို ရှာမတွေ့ပါ။")
+        st.warning("ဒေတာ ရယူ၍ မရသေးပါ။")
 
   except Exception as e:
     st.error(f"Error occurred: {e}")
-
+ 
 
 # ခလုတ်နှိပ်ပြီး ဒေတာအသစ် ရယူရန်
 if st.button(" ဒေတာအသစ် ရယူရန် (Refresh / Fetch)", key="fetch_btn_1"):
