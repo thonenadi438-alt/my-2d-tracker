@@ -29,8 +29,6 @@ conn.commit()
 # ၂။ ဒေတာဆွဲယူမည့် ဖန်ရှင်
 
 from datetime import datetime, timedelta, timezone
-
-
 def fetch_and_log_data():
   url = "https://myanmar-2d.vercel.app/"
   try:
