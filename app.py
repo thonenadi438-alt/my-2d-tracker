@@ -11,14 +11,12 @@ st.set_page_config(
     page_title="Myanmar 2D Live Tracker", page_icon="", layout="centered"
 )
 
-# Custom CSS Styles for Modern UI (UI ဒီဇိုင်း အလန်းစားများ)
+# Custom CSS Styles for Modern UI
 st.markdown("""
     <style>
-    /* Main Background & Font */
     .main {
         background-color: #0e1117;
     }
-    /* Header Style */
     .title-text {
         text-align: center;
         color: #f0f2f6;
@@ -26,7 +24,6 @@ st.markdown("""
         margin-bottom: 25px;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
     }
-    /* Live Card Style */
     .live-card {
         background: linear-gradient(135deg, #1f4068 0%, #162447 100%);
         padding: 30px;
@@ -52,9 +49,10 @@ st.markdown("""
     }
     .update-time {
         color: #a7a9be;
-        font-size: 14px;
+        font-size: 15px;
+        font-weight: 500;
+        margin-top: 5px;
     }
-    /* Button Styling */
     .stButton>button {
         width: 100%;
         background-color: #e43f5a;
@@ -78,9 +76,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ၁။ Auto-refresh (၁၅ စက်န့်တစ်ကြိမ်)
+# ၁။ Auto-refresh (၁၅ စက္ကန့်တစ်ကြိမ်)
 count = st_autorefresh(
-    interval=15000, limit=None, key="modern_ui_autorefresh_key"
+    interval=15000, limit=None, key="modern_ui_autorefresh_key_v2"
 )
 
 # ၂။ Database ချိတ်ဆက်ခြင်းနှင့် Table ဆောက်ခြင်း
@@ -149,7 +147,10 @@ def fetch_and_log_json_api():
 
       if live_number and len(live_number) == 2:
         myanmar_tz = timezone(timedelta(hours=6, minutes=30))
-        current_time = datetime.now(myanmar_tz).strftime("%Y-%m-%d %H:%M:%S")
+        # ၁၂ နာရီပုံစံ (AM/PM) ဖြင့် အချိန်သိမ်းဆည်းရန် (%I:%M:%S %p)
+        current_time = datetime.now(myanmar_tz).strftime(
+            "%Y-%m-%d %I:%M:%S %p"
+        )
 
         cursor.execute(
             "SELECT live_data FROM number_logs ORDER BY id DESC LIMIT 1"
@@ -169,14 +170,21 @@ def fetch_and_log_json_api():
 # အလိုအလျောက် ဒေတာဆွဲမည်
 fetch_and_log_json_api()
 
-# ၄။ UI Display - လက်ရှိ Live ဂဏန်းပြသရန် Card အလန်းစား
+# ၄။ UI Display - လက်ရှိ Live ဂဏန်းပြသရန် Card (၁၂ နာရီအချိန်ပြဇယားပါဝင်သည်)
 cursor.execute("SELECT timestamp, live_data FROM number_logs ORDER BY id DESC LIMIT 1")
 latest_data = cursor.fetchone()
 
 display_num = latest_data[1] if latest_data else "--"
-display_time = (
-    latest_data[0] if latest_data else "ဒေတာ မရှိသေးပါ"
-)
+
+if latest_data and latest_data[0]:
+  # Database ထဲတွင် သိမ်းထားပြီးသား အချိန်ကို ၁၂ နာရီပုံစံသို့ အလွယ်တကူ ပြောင်းလဲပြသရန်
+  try:
+    dt_obj = datetime.strptime(latest_data[0], "%Y-%m-%d %H:%M:%S")
+    display_time = dt_obj.strftime("%Y-%m-%d %I:%M:%S %p")
+  except:
+    display_time = latest_data[0]
+else:
+  display_time = "ဒေ မရှိသေးပါ"
 
 st.markdown(
     f"""
@@ -209,6 +217,7 @@ with tab1:
 
 with tab2:
   st.subheader(" ဂဏန်းကျရောက်မှု ရာခိုင်နှုန်းများ")
+  df = pd.read_sql("SELECT * FROM number_logs ORDER BY id DESC", conn)
   if not df.empty:
     total_count = len(df)
     counts = df["live_data"].value_counts()
