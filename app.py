@@ -11,7 +11,7 @@ st.set_page_config(
     page_title="Myanmar 2D Live Tracker", page_icon="", layout="centered"
 )
 
-# Custom CSS Styles for Modern UI (UI ဒီဇိုင္း အလန္းစားမ်ား)
+# Custom CSS Styles for Modern UI (UI ဒီဇိုင်း အလန်းစားများ)
 st.markdown("""
     <style>
     /* Main Background & Font */
@@ -72,18 +72,18 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ေခါင္းစဥ္ႏွင့္ ဖန္တီးသူအမွတ္အသား
+# ခေါင်းစဉ်နှင့် ဖန်တီးသူအမှတ်အသား
 st.markdown(
     "<h3 class='title-text'> Myanmar 2D Live Tracker</h3>",
     unsafe_allow_html=True,
 )
 
-# ၁။ Auto-refresh (၁၅ စက္န႔္တစ္ႀကိမ္)
+# ၁။ Auto-refresh (၁၅ စက်န့်တစ်ကြိမ်)
 count = st_autorefresh(
     interval=15000, limit=None, key="modern_ui_autorefresh_key"
 )
 
-# ၂။ Database ခ်ိတ္ဆက္ျခင္းႏွင့္ Table ေဆာက္ျခင္း
+# ၂။ Database ချိတ်ဆက်ခြင်းနှင့် Table ဆောက်ခြင်း
 conn = sqlite3.connect("my_2d_log.db", check_same_thread=False)
 cursor = conn.cursor()
 
@@ -97,7 +97,7 @@ cursor.execute("""
 conn.commit()
 
 
-# ၃။ API မွ ေဒတာဆြဲယူၿပီး Database သို႔ သိမ္းမည့္ ဖန္ရွင္
+# ၃။ API မှ ဒေတာဆွဲယူပြီး Database သို့ သိမ်းမည့် ဖန်ရှင်
 def fetch_and_log_json_api():
   api_url = {
   "live": {
@@ -133,6 +133,7 @@ def fetch_and_log_json_api():
     }
   ]
 }
+
   try:
     req = urllib.request.Request(
         api_url,
@@ -165,16 +166,16 @@ def fetch_and_log_json_api():
     pass
 
 
-# အလိုအေလ်ာက္ ေဒတာဆြဲမည္
+# အလိုအလျောက် ဒေတာဆွဲမည်
 fetch_and_log_json_api()
 
-# ၄။ UI Display - လက္ရွိ Live ဂဏန္းျပသရန္ Card အလန္းစား
+# ၄။ UI Display - လက်ရှိ Live ဂဏန်းပြသရန် Card အလန်းစား
 cursor.execute("SELECT timestamp, live_data FROM number_logs ORDER BY id DESC LIMIT 1")
 latest_data = cursor.fetchone()
 
 display_num = latest_data[1] if latest_data else "--"
 display_time = (
-    latest_data[0] if latest_data else "ေဒတာ မရွိေသးပါ"
+    latest_data[0] if latest_data else "ဒေတာ မရှိသေးပါ"
 )
 
 st.markdown(
@@ -188,26 +189,26 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# လက္ျဖင့္ ခ်က္ခ်င္းေဒတာဆြဲရန္ ခလုတ္
-if st.button(" ေဒတာအသစ္ ခ်က္ခ်င္းရယူရန္"):
+# လက်ဖြင့် ချက်ချင်းဒေတာဆွဲရန် ခလုတ်
+if st.button(" ဒေတာအသစ် ချက်ချင်းရယူရန်"):
   fetch_and_log_json_api()
   st.rerun()
 
 st.markdown("---")
 
-# ၅။ ေဒတာမ်ားကို ဝဘ္ဆိုဒ္ေပၚတြင္ ျပသျခင္း (Tabs ျဖင့္ ခြဲထုတ္ျခင္း)
-tab1, tab2 = st.tabs([" စာရင္းဇယား (History)", " ရာခိုင္ႏႈန္း ခြဲျခမ္းစိတ္ျဖာမႈ"])
+# ၅။ ဒေတာများကို ဝဘ်ဆိုဒ်ပေါ်တွင် ပြသခြင်း (Tabs ဖြင့် ခွဲထုတ်ခြင်း)
+tab1, tab2 = st.tabs([" စာရင်းဇယား (History)", " ရာခိုင်နှုန်း ခွဲခြမ်းစိတ်ဖြာမှု"])
 
 with tab1:
-  st.subheader(" မွတ္တမ္းဇယား")
+  st.subheader(" မှတ်တမ်းဇယား")
   df = pd.read_sql("SELECT * FROM number_logs ORDER BY id DESC", conn)
   if not df.empty:
     st.dataframe(df, use_container_width=True, hide_index=True)
   else:
-    st.info("ေလာေလာဆယ္ ေဒတာ မရွိေသးပါ။")
+    st.info("လောလောဆယ် ဒေတာ မရှိသေးပါ။")
 
 with tab2:
-  st.subheader(" ဂဏန္းက်ေရာက္မႈ ရာခိုင္ႏႈန္းမ်ား")
+  st.subheader(" ဂဏန်းကျရောက်မှု ရာခိုင်နှုန်းများ")
   if not df.empty:
     total_count = len(df)
     counts = df["live_data"].value_counts()
@@ -215,7 +216,7 @@ with tab2:
     for num, count in counts.items():
       percentage = (count / total_count) * 100
       st.markdown(f"""
-            - ဂဏန္း **{num}**: **{count}** ႀကိမ္ က်ေရာက္ (ရာခိုင္ႏႈန္း: **{percentage:.2f}%**)
+            - ဂဏန်း **{num}**: **{count}** ကြိမ် ကျရောက် (ရာခိုင်နှုန်း: **{percentage:.2f}%**)
             """)
   else:
-    st.info("ရာခိုင္ႏႈန္း တြက္ခ်က္ရန္ ေဒတာ မရွိေသးပါ။")
+    st.info("ရာခိုင်နှုန်း တွက်ချက်ရန် ဒေတာ မရှိသေးပါ။")
