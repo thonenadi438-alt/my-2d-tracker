@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+import random
 import sqlite3
 import urllib.request
 import pandas as pd
@@ -27,13 +28,6 @@ conn.commit()
 
 
 # ၂။ ဒေတာဆွဲယူမည့် ဖန်ရှင်
-
-from datetime import datetime, timedelta, timezone
-def fetch_and_log_data():
-from datetime import datetime, timedelta, timezone
-import random
-
-
 def fetch_and_log_data():
   url = "https://myanmar-2d.vercel.app/"
   try:
@@ -51,7 +45,6 @@ def fetch_and_log_data():
 
       live_number = None
 
-      # ဝဘ်ဆိုဒ်စာမျက်နှာပေါ်ရှိ စာသားများထဲမှ ဂဏန်း ၂ လုံးကို ရှာဖွေခြင်း
       for tag in soup.find_all(
           ["div", "span", "b", "h1", "h2", "p", "strong"]
       ):
@@ -60,12 +53,10 @@ def fetch_and_log_data():
           live_number = text
           break
 
-      # အကယ်၍ ဝဘ်ဆိုဒ်မှ တိုက်ရိုက်မမိပါက ယာယီ မပျက်မကွက် မှတ်တမ်းတင်နိုင်ရန်
       if not live_number:
         live_number = f"{random.randint(0, 99):02d}"
 
       if live_number:
-        # မြန်မာစံတော်ချိန် (UTC +6:30) ဖြင့် အချိန်ယူခြင်း
         myanmar_tz = timezone(timedelta(hours=6, minutes=30))
         current_time = datetime.now(myanmar_tz).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -80,7 +71,7 @@ def fetch_and_log_data():
 
   except Exception as e:
     st.error(f"Error occurred: {e}")
- 
+
 
 # ခလုတ်နှိပ်ပြီး ဒေတာအသစ် ရယူရန်
 if st.button(" ဒေတာအသစ် ရယူရန် (Refresh / Fetch)", key="fetch_btn_1"):
