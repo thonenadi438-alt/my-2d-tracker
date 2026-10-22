@@ -1,3 +1,7 @@
+# ခလုတ်နာမည်တူနေတာကို ရှောင်ရှားရန် key ထည့်ပေးခြင်း
+if st.button(" ဒေတာအသစ် ရယူရန် (Refresh / Fetch)", key="fetch_btn_1"):
+  fetch_and_log_data()
+  st.rerun()
 import streamlit as st
 
 # ဖန်တီးသူ အမှတ်အသား စာသားထည့်ရန်
