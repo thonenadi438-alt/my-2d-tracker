@@ -116,7 +116,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ခေါင်းစဉ်နှင့် ဖန်တီးသူအမှတ်အသား
+# ခေါင်းစဉ်
 st.markdown(
     "<h3 class='title-text'>Myanmar 2D Live Tracker</h3>",
     unsafe_allow_html=True,
@@ -124,10 +124,10 @@ st.markdown(
 
 # ၁။ Auto-refresh (၁၅ စက္ကန့်တစ်ကြိမ်)
 count = st_autorefresh(
-    interval=15000, limit=None, key="modern_ui_autorefresh_key_v2"
+    interval=15000, limit=None, key="modern_ui_autorefresh_key_v3"
 )
 
-# ၂။ Database ချိတ်ဆက်ခြင်းနှင့် Tables ဆောက်ခြင်း
+# ၂။ Database ချိတ်ဆက်ခြင်း
 conn = sqlite3.connect("my_2d_log.db", check_same_thread=False)
 cursor = conn.cursor()
 
@@ -139,7 +139,6 @@ cursor.execute("""
     )
 """)
 
-# Lucky Numbers အတွက် Table အသစ်
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS lucky_numbers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -152,7 +151,6 @@ cursor.execute("""
 """)
 conn.commit()
 
-# Default Lucky Numbers ထည့်သွင်းခြင်း (မရှိသေးမှသာ)
 cursor.execute("SELECT COUNT(*) FROM lucky_numbers")
 if cursor.fetchone()[0] == 0:
   cursor.execute(
@@ -162,14 +160,29 @@ if cursor.fetchone()[0] == 0:
   conn.commit()
 
 
-# ၃။ API မှ ဒေတာဆွဲယူပြီး Database သို့ သိမ်းမည့် ဖန်ရှင်
+# ၃။ ပေးထားသော API ဖြင့် ဒေတာဆွဲယူမည့် ဖန်ရှင်
 def fetch_and_log_json_api():
-  # (မူလ သင့် API URL ဒါမှမဟုတ် dict ကို ဤနေရာတွင် ထည့်သွင်းနိုင်သည်)
+  # သင်အသုံးပြုလိုသော API Endpoint လိပ်စာကို ဤနေရာတွင် ထည့်ပါ (ဥပမာ - https://api.example.com/live)
+  # လက်တလော နမူနာအနေဖြင့် ပေးထားသော JSON များကို Python Dictionary အဖြစ် သုံးထားပါသည်
   api_data = {
-      "live": {"set": "1,626.27", "value": "85,650.24", "twod": "70"}
+      "live": {
+          "set": "1,626.27",
+          "value": "85,650.24",
+          "time": "2021-11-04 16:12:40",
+          "twod": "70",
+      }
   }
+
   try:
+    # တကယ်တမ်း အပြင်က URL လိပ်စာကနေဆွဲမည်ဆိုပါက အောက်ပါအတိုင်း သုံးနိုင်သည်:
+    # url = "YOUR_API_URL_HERE"
+    # req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    # with urllib.request.urlopen(req) as response:
+    #     res_data = json.loads(response.read().decode('utf-8'))
+    #     live_number = str(res_data.get("live", {}).get("twod", ""))
+
     live_number = str(api_data.get("live", {}).get("twod", ""))
+
     if live_number and len(live_number) == 2:
       myanmar_tz = timezone(timedelta(hours=6, minutes=30))
       current_time = datetime.now(myanmar_tz).strftime("%Y-%m-%d %I:%M:%S %p")
@@ -189,10 +202,9 @@ def fetch_and_log_json_api():
     pass
 
 
-# အလိုအလျောက် ဒေတာဆွဲမည်
 fetch_and_log_json_api()
 
-# ၄။ UI Display - လက်ရှိ Live ဂဏန်းပြသရန် Card
+# ၄။ UI Display - Live 2D Result
 cursor.execute(
     "SELECT timestamp, live_data FROM number_logs ORDER BY id DESC LIMIT 1"
 )
@@ -220,13 +232,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# လက်ဖြင့် ချက်ချင်းဒေတာဆွဲရန် ခလုတ်
 if st.button("ဒေတာအသစ် ချက်ချင်းရယူရန်"):
   fetch_and_log_json_api()
   st.rerun()
 
 # ---------------------------------------------------------
-# ၅။ LUCKY NUMBERS FOR YOU SECTION (Admin 5 ဃဏန်း)
+# ၅။ LUCKY NUMBERS FOR YOU SECTION (Admin 5 ဂဏန်း)
 # ---------------------------------------------------------
 
 
@@ -322,7 +333,7 @@ with st.expander(" Admin Panel (Lucky Numbers ထည့်ရန်)"):
 
 st.markdown("---")
 
-# ၇။ ဒေတာများကို ဝဘ်ဆိုဒ်ပေါ်တွင် ပြသခြင်း (Tabs ဖြင့် ခွဲထုတ်ခြင်း)
+# ၇။ History နှင့် Analytics Tabs
 tab1, tab2 = st.tabs(["စာရင်းဇယား (History)", "ရာခိုင်နှုန်း ခွဲခြမ်းစိတ်ဖြာမှု"])
 
 with tab1:
